@@ -10,7 +10,7 @@ class WhiteBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return context.width < 1100
+    return context.width < 900
         ? const WhiteBoardSmall(availableColors)
         : const WhiteBoardLarge(availableColors);
   }

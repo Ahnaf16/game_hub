@@ -54,7 +54,7 @@ class _WhiteBoardSmallState extends State<WhiteBoardSmall> {
               });
             },
             child: CustomPaint(
-              painter: WhiteBoardPainter(points),
+              painter: WhiteBoardPainter(points, []),
               child: Container(
                 constraints: const BoxConstraints.expand(),
               ),
