@@ -1,15 +1,12 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:game_hub/core/core.dart';
+import 'package:game_hub/features/whiteboard/ctrl/wb_ctrl.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 import 'draw_point.dart';
 import 'painter.dart';
-
-const availableColors = Colors.accents;
 
 class WhiteBoardLarge extends HookConsumerWidget {
   const WhiteBoardLarge(this.availableColors, {super.key});
@@ -18,15 +15,13 @@ class WhiteBoardLarge extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final points = useState(<DrawPoint>[]);
-    final eraserPoints = useState(<Offset>[]);
-    final undoHistory = useState(<DrawPoint>[]);
-    final selectedColor = useState(availableColors.first);
-    final selectedMode = useState(DrawMode.pen);
-    final strokeWidth = useState(5.0);
-    final isFilled = useState(false);
-    final currentPoint = useState<DrawPoint?>(null);
-    final key = useMemoized(GlobalKey.new);
+    final state = ref.watch(whiteBoardCtrlProvider);
+    final selectedColor = state.selectedColor;
+    final selectedMode = state.selectedMode;
+    final strokeWidth = state.strokeWidth;
+    final isFilled = state.isFilled;
+
+    final reader = useCallback(() => ref.read(whiteBoardCtrlProvider.notifier));
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,9 +29,7 @@ class WhiteBoardLarge extends HookConsumerWidget {
         title: const Text('Whiteboard'),
         actions: [
           IconButton(
-            onPressed: () {
-              log(points.value.length.toString());
-            },
+            onPressed: () {},
             icon: const Icon(Icons.bug_report),
           ),
         ],
@@ -53,11 +46,11 @@ class WhiteBoardLarge extends HookConsumerWidget {
                   children: [
                     const Text('Stroke'),
                     Slider(
-                      label: '${strokeWidth.value.floor()}',
+                      label: '${strokeWidth.floor()}',
                       divisions: 50,
-                      value: strokeWidth.value,
+                      value: strokeWidth,
                       max: 50,
-                      onChanged: (value) => strokeWidth.value = value,
+                      onChanged: (value) => reader.call().setStrokeWidth(value),
                     ),
                     const SizedBox(height: 10),
                     const Text('Colors'),
@@ -70,7 +63,7 @@ class WhiteBoardLarge extends HookConsumerWidget {
                           (e) => Stack(
                             children: [
                               InkWell(
-                                onTap: () => selectedColor.value = e,
+                                onTap: () => reader.call().setColor(e),
                                 child: Container(
                                   clipBehavior: Clip.none,
                                   height: 30,
@@ -84,7 +77,7 @@ class WhiteBoardLarge extends HookConsumerWidget {
                                   ),
                                 ),
                               ),
-                              if (e == selectedColor.value)
+                              if (e == selectedColor)
                                 Positioned.fill(
                                   child: Center(
                                     child: Icon(
@@ -116,9 +109,9 @@ class WhiteBoardLarge extends HookConsumerWidget {
                           label: const Text('Stroked'),
                         ),
                       ],
-                      selected: {isFilled.value ? 0 : 1},
+                      selected: {isFilled ? 0 : 1},
                       onSelectionChanged: (value) {
-                        isFilled.value = value.contains(0);
+                        reader.call().toggleIsFilled(value.contains(0));
                       },
                     ),
                     const SizedBox(height: 10),
@@ -132,28 +125,21 @@ class WhiteBoardLarge extends HookConsumerWidget {
                           icon: Icons.undo_rounded,
                           label: 'undo',
                           onPressed: () {
-                            if (points.value.isEmpty) return;
-                            undoHistory.value.add(points.value.last);
-                            points.value.removeLast();
+                            reader.call().undo();
                           },
                         ),
                         KIconButton(
                           icon: Icons.redo_rounded,
                           label: 'redo',
                           onPressed: () {
-                            if (undoHistory.value.isEmpty) return;
-                            points.value.add(undoHistory.value.last);
-                            undoHistory.value.removeLast();
+                            reader.call().redo();
                           },
                         ),
                         KIconButton(
                           icon: Icons.delete_outline,
                           label: 'clear canvas',
                           onPressed: () {
-                            if (points.value.isEmpty) return;
-                            undoHistory.value.addAll(points.value);
-                            points.value.clear();
-                            currentPoint.value = null;
+                            reader.call().clearCanvas();
                           },
                           warning: true,
                         ),
@@ -161,9 +147,7 @@ class WhiteBoardLarge extends HookConsumerWidget {
                           icon: Icons.delete_forever_outlined,
                           label: 'clear canvas with history',
                           onPressed: () {
-                            undoHistory.value.clear();
-                            points.value.clear();
-                            currentPoint.value = null;
+                            reader.call().clearCanvas(true);
                           },
                           warning: true,
                         ),
@@ -180,8 +164,8 @@ class WhiteBoardLarge extends HookConsumerWidget {
                           (e) => KIconButton(
                             icon: e.icon,
                             label: e.name,
-                            onPressed: () => selectedMode.value = e,
-                            selected: e == selectedMode.value,
+                            onPressed: () => reader.call().setMode(e),
+                            selected: e == selectedMode,
                           ),
                         ),
                       ],
@@ -191,46 +175,48 @@ class WhiteBoardLarge extends HookConsumerWidget {
               ),
             ),
           ),
-          Expanded(
+          //^ painter
+          const Expanded(
             flex: 3,
-            child: Card(
-              elevation: 3,
-              child: GestureDetector(
-                onPanStart: (details) {
-                  currentPoint.value = DrawPoint(
-                    id: DateTime.now().microsecond,
-                    offsets: [details.localPosition],
-                    stockWidth: strokeWidth.value,
-                    color: selectedColor.value,
-                    mode: selectedMode.value,
-                    filled: isFilled.value,
-                  );
-
-                  if (currentPoint.value == null) return;
-
-                  points.value.add(currentPoint.value!);
-                },
-                onPanUpdate: (details) {
-                  if (currentPoint.value == null) return;
-                  currentPoint.value =
-                      currentPoint.value!.addOffset(details.localPosition);
-
-                  points.value.last = currentPoint.value!;
-                },
-                onPanEnd: (d) {
-                  currentPoint.value = null;
-                },
-                child: CustomPaint(
-                  key: key,
-                  painter: WhiteBoardPainter(points.value, eraserPoints.value),
-                  child: Container(
-                    constraints: const BoxConstraints.expand(),
-                  ),
-                ),
-              ),
-            ),
+            child: _PainterWidget(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PainterWidget extends HookConsumerWidget {
+  const _PainterWidget();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reader = useCallback(() => ref.read(whiteBoardCtrlProvider.notifier));
+    final state = ref.watch(whiteBoardCtrlProvider);
+    final points = state.points;
+
+    return Card(
+      elevation: 3,
+      child: GestureDetector(
+        onPanStart: (details) {
+          reader.call().addPoint(details.localPosition);
+        },
+        onPanUpdate: (details) {
+          reader.call().updateCurrent(details.localPosition);
+        },
+        onPanEnd: (d) {
+          reader.call().updateCurrent(null);
+        },
+        child: Container(
+          color: Colors.white,
+          margin: const EdgeInsets.all(15),
+          child: CustomPaint(
+            painter: WhiteBoardPainter(points),
+            child: Container(
+              constraints: const BoxConstraints.expand(),
+            ),
+          ),
+        ),
       ),
     );
   }

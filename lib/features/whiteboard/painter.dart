@@ -5,41 +5,38 @@ import 'package:flutter/material.dart';
 import 'draw_point.dart';
 
 class WhiteBoardPainter extends CustomPainter {
-  WhiteBoardPainter(this.points, this.eraserPoints);
+  WhiteBoardPainter(this.points);
 
   final List<DrawPoint> points;
-  final List<Offset> eraserPoints;
 
   @override
   void paint(Canvas canvas, Size size) {
     for (var point in points) {
-      Paint paint = Paint()
-        ..color = point.color
-        ..strokeWidth = point.stockWidth
-        ..strokeCap = StrokeCap.round
-        ..isAntiAlias = true
-        ..style = point.filled ? PaintingStyle.fill : PaintingStyle.stroke;
+      Paint paint = point.paint();
 
       final offsets = point.offsets;
-      final path = Path()..moveTo(offsets.first.dx, offsets.first.dy);
+      final path = point.path();
 
-      Rect rect = Rect.fromPoints(offsets.first, offsets.last);
+      Rect rect = point.rect();
 
       for (var i = 0; i < offsets.length; i++) {
         final isNotLast = i != offsets.length - 1;
 
         final current = offsets[i];
 
+        if (isNotLast) {
+          final next = offsets[i + 1];
+          path.quadraticBezierTo(
+            current.dx,
+            current.dy,
+            (current.dx + next.dx) / 2,
+            (current.dy + next.dy) / 2,
+          );
+        }
+
         switch (point.mode) {
           case DrawMode.pen:
             if (isNotLast) {
-              final next = offsets[i + 1];
-              path.quadraticBezierTo(
-                current.dx,
-                current.dy,
-                (current.dx + next.dx) / 2,
-                (current.dy + next.dy) / 2,
-              );
               canvas.drawPath(path, paint);
             } else {
               canvas.drawPoints(PointMode.points, [current], paint);
@@ -49,6 +46,8 @@ class WhiteBoardPainter extends CustomPainter {
             paint.style = PaintingStyle.fill;
             canvas.drawRect(rect, paint);
           case DrawMode.eraser:
+            canvas.drawPath(path, paint..color = Colors.white);
+
             break;
           case DrawMode.line:
             canvas.drawLine(offsets.first, offsets.last, paint);

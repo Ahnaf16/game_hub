@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -28,28 +27,16 @@ class DrawPoint {
         filled: filled,
       );
 
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
+  Paint paint() => Paint()
+    ..color = color
+    ..strokeWidth = stockWidth
+    ..strokeCap = StrokeCap.round
+    ..isAntiAlias = true
+    ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke;
 
-    return other is DrawPoint &&
-        other.id == id &&
-        listEquals(other.offsets, offsets) &&
-        other.color == color &&
-        other.stockWidth == stockWidth &&
-        other.mode == mode &&
-        other.filled == filled;
-  }
+  Path path() => Path()..moveTo(offsets.first.dx, offsets.first.dy);
 
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        offsets.hashCode ^
-        color.hashCode ^
-        stockWidth.hashCode ^
-        mode.hashCode ^
-        filled.hashCode;
-  }
+  Rect rect() => Rect.fromPoints(offsets.first, offsets.last);
 }
 
 enum DrawMode {
