@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart';
+import 'package:game_hub/core/core.dart';
+
+enum GameState { idle, start, over }
 
 class SnakeGame extends StatefulWidget {
   const SnakeGame({super.key});
@@ -16,6 +19,8 @@ class _SnakeGameState extends State<SnakeGame> {
   List<int> snakePosition = [];
   int snakeHade = 0;
   int score = 0;
+  Duration time = Duration.zero;
+  GameState state = GameState.idle;
 
   @override
   void initState() {
@@ -26,7 +31,9 @@ class _SnakeGameState extends State<SnakeGame> {
   void startGame() {
     snakePosition = [390, 389, 388];
     snakeHade = snakePosition.first;
+    if (state == GameState.idle) return;
     final timer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
+      time = time + const Duration(seconds: 1);
       updateSnake();
     });
     if (snakeHade == row * column) {
@@ -71,6 +78,7 @@ class _SnakeGameState extends State<SnakeGame> {
               icon: const Icon(Icons.refresh_rounded),
             ),
             Text('Score : $score'),
+            Text('Time : $time'),
           ],
         ),
       ),
@@ -99,7 +107,7 @@ class _SnakeGameState extends State<SnakeGame> {
                     borderRadius: BorderRadius.circular(5),
                   ),
                   alignment: Alignment.center,
-                  child: Text('$index'),
+                  child: Text('$index', style: context.textTheme.bodySmall),
                 );
               },
             ),

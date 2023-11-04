@@ -3,7 +3,7 @@ import 'package:game_hub/core/core.dart';
 import 'package:game_hub/route/route_names.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class HomePageView extends ConsumerWidget {
+class HomePageView extends HookConsumerWidget {
   const HomePageView({super.key});
 
   @override
