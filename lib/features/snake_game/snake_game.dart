@@ -18,8 +18,8 @@ class SnakeGame extends StatefulWidget {
 
 class _SnakeGameState extends State<SnakeGame> {
   Timer? timer;
-  int row = 20;
-  int column = 20;
+  int row = 10;
+  int column = 10;
   List<int> snakePosition = [];
   int snakeHade = 0;
   late int food;
