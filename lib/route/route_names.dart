@@ -10,8 +10,9 @@ class RouteNames {
   static final RouteName whiteboard =
       RouteName('whiteboard', icon: MdiIcons.bulletinBoard);
   static final RouteName snake = RouteName('snake', icon: MdiIcons.snake);
+  static final RouteName grids = RouteName('grids', icon: MdiIcons.grid);
 
-  static final allProjects = [whiteboard, snake];
+  static final allProjects = [whiteboard, snake, grids];
 }
 
 class RouteName {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:game_hub/features/grids/grids_lightning.dart';
 import 'package:game_hub/features/home/home_view.dart';
 import 'package:game_hub/features/snake_game/snake_game.dart';
 import 'package:game_hub/route/page/splash_view.dart';
@@ -46,6 +47,12 @@ final routes = Provider<List<RouteBase>>(
             name: RouteNames.snake.name,
             pageBuilder: (context, state) =>
                 _pageBuilder(child: const SnakeGame()),
+          ),
+          GoRoute(
+            path: RouteNames.grids.path,
+            name: RouteNames.grids.name,
+            pageBuilder: (context, state) =>
+                _pageBuilder(child: const GridsLightning()),
           ),
         ]),
   ],

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:game_hub/core/util/utility.dart';
 import 'package:game_hub/route/route_config.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import 'theme/app_theme.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -19,9 +20,8 @@ class MainApp extends ConsumerWidget {
       scaffoldMessengerKey: Utility.key,
       debugShowCheckedModeBanner: false,
       routerConfig: ref.watch(routesProvider),
-      theme: ThemeData.light(useMaterial3: true).copyWith(
-        textTheme: GoogleFonts.sourceCodeProTextTheme(),
-      ),
+      theme: AppTheme.theme,
+      darkTheme: AppTheme.darkTheme,
     );
   }
 }
